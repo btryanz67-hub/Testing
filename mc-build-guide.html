@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MC Build Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0d0d14;--panel:#13131e;--card:#181826;--border:#222233;--accent:#5aff6e;--accent2:#ffb347;--text:#dde0f5;--muted:#555577;--red:#ff5555}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif}
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh}
+header{flex-shrink:0;background:var(--panel);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px}
+.logo{font-size:15px;font-weight:700;color:var(--accent)}.logo span{color:var(--accent2)}
+.hbtn{margin-left:auto;display:flex;gap:6px}
+.hbtn button{padding:5px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;transition:.15s}
+.hbtn button:hover,.hbtn button.on{border-color:var(--accent);color:var(--accent)}
+.tabs{flex-shrink:0;display:flex;background:var(--panel);border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:9px 4px;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;user-select:none}
+.tab.on{color:var(--accent);border-color:var(--accent)}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.view.on{display:flex}
+.fscroll{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ch{padding:10px 14px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border)}
+.upload-label{display:block;padding:28px 16px;text-align:center;cursor:pointer;border:2px dashed var(--border);border-radius:10px;transition:.2s}
+.upload-label:hover,.upload-label.drag{border-color:var(--accent);background:rgba(90,255,110,.05)}
+.uico{font-size:40px;display:block;margin-bottom:8px}
+.utitle{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.usub{font-size:11px;color:var(--muted)}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.file-row{display:none;padding:12px 14px;align-items:center;gap:10px}
+.file-row.on{display:flex}
+.fbadge{width:38px;height:38px;background:rgba(90,255,110,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.finfo{flex:1;min-width:0}
+.fname{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--accent)}
+.fmeta{font-size:10px;color:var(--muted);margin-top:2px}
+.fdel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 6px}
+.fdel:hover{color:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);padding:14px}
+.stat{text-align:center}.sv{font-size:20px;font-weight:700;color:var(--accent)}
+.slbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.hint{background:rgba(255,179,71,.07);border:1px solid rgba(255,179,71,.25);border-radius:10px;padding:14px;font-size:11px;color:var(--accent2);line-height:1.8}
+.hint strong{display:block;margin-bottom:4px;font-size:12px}
+.tb3d{flex-shrink:0;background:rgba(13,13,20,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:6px 10px;display:flex;gap:5px;align-items:center;overflow-x:auto}
+.tb3d::-webkit-scrollbar{display:none}
+.t3b{flex-shrink:0;padding:5px 9px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:10px;cursor:pointer;transition:.15s;white-space:nowrap}
+.t3b:hover,.t3b.on{border-color:var(--accent);color:var(--accent)}
+.lyr{flex-shrink:0;display:flex;align-items:center;gap:5px;margin-left:auto;font-size:10px;color:var(--muted)}
+.lyr input{width:70px;accent-color:var(--accent)}
+.cvw{flex:1;position:relative;overflow:hidden;min-height:0}
+#cv{width:100%;height:100%;display:block;touch-action:none}
+.e3d{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none}
+.e3i{font-size:56px;opacity:.2;animation:fl 3s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.e3t{font-size:12px;color:var(--muted);text-align:center}
+.ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(10,10,18,.85)}
+.ov.on{display:flex}
+.spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ovt{font-size:11px;color:var(--accent)}
+.snav{flex-shrink:0;display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.sb{flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer;transition:.15s}
+.sb:disabled{opacity:.3;cursor:default}
+.sb.nx{border-color:var(--accent2);color:var(--accent2)}
+.sb.nx:hover:not(:disabled){background:rgba(255,179,71,.1)}
+.sb:not(.nx):hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.sinf{flex-shrink:0;padding:10px 14px;border-bottom:1px solid var(--border)}
+.sitp{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.silb{font-size:12px;font-weight:700;color:var(--accent2)}
+.sict{font-size:10px;color:var(--muted)}
+.prg{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.prgb{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width .3s}
+.ll{flex:1;overflow-y:auto;padding:8px}
+.ll::-webkit-scrollbar{width:3px}
+.ll::-webkit-scrollbar-thumb{background:var(--border)}
+.lc{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;cursor:pointer;transition:.12s}
+.lc:hover{border-color:var(--muted)}.lc.on{border-color:var(--accent2)}
+.lch{padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+.lc.on .lch{background:rgba(255,179,71,.07)}
+.lcy{font-size:11px;font-weight:600;color:var(--accent2)}
+.lcm{font-size:10px;color:var(--muted)}
+.lcb{display:none;padding:8px 12px;border-top:1px solid var(--border);background:rgba(0,0,0,.25)}
+.lc.on .lcb{display:block}
+.lct{font-size:10px;color:var(--muted);margin-bottom:6px}
+.mg{display:inline-grid;gap:1px;background:var(--border);image-rendering:pixelated}
+.bsw{flex-shrink:0;padding:10px 12px;border-bottom:1px solid var(--border)}
+.bsi{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;outline:none}
+.bsi:focus{border-color:var(--accent)}
+.bl{flex:1;overflow-y:auto;padding:8px 12px}
+.bl::-webkit-scrollbar{width:3px}
+.bl::-webkit-scrollbar-thumb{background:var(--border)}
+.bi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:7px;transition:.1s}
+.bi:hover{background:var(--card)}
+.bth{width:32px;height:32px;border-radius:4px;border:1px solid var(--border);flex-shrink:0;image-rendering:pixelated;object-fit:cover}
+.bn{flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc{font-size:11px;font-weight:700;color:var(--accent);min-width:32px;text-align:right}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:9px 18px;font-size:12px;color:var(--accent);z-index:9999;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo">⛏ MC <span>BUILD</span></div>
+  <div class="hbtn">
+    <button id="bWire">⊞ Grid</button>
+    <button id="bAll">All</button>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab on" data-t="files">📁 Files</div>
+  <div class="tab" data-t="v3d">🎲 3D</div>
+  <div class="tab" data-t="steps">📋 Steps</div>
+  <div class="tab" data-t="blocks">🧱 Blocks</div>
+</div>
+<div class="views">
+  <div class="view on" id="v-files">
+    <div class="fscroll">
+      <div class="card">
+        <div class="ch">📁 Structure</div>
+        <label class="upload-label" id="dropLbl" for="fileIn">
+          <span class="uico">🏗️</span>
+          <div class="utitle">Upload .mcstructure</div>
+          <div class="usub">Tap untuk pilih file</div>
+        </label>
+        <input type="file" id="fileIn" accept=".mcstructure">
+        <div class="file-row" id="fileRow">
+          <div class="fbadge">🏗️</div>
+          <div class="finfo">
+            <div class="fname" id="fName">-</div>
+            <div class="fmeta" id="fMeta">-</div>
+          </div>
+          <button class="fdel" id="fDel">✕</button>
+        </div>
+      </div>
+      <div class="card" id="stCard" style="display:none">
+        <div class="ch">📊 Info</div>
+        <div class="stats">
+          <div class="stat"><div class="sv" id="ss">-</div><div class="slbl">Size</div></div>
+          <div class="stat"><div class="sv" id="sb2">-</div><div class="slbl">Blocks</div></div>
+          <div class="stat"><div class="sv" id="sl2">-</div><div class="slbl">Layers</div></div>
+          <div class="stat"><div class="sv" id="st">-</div><div class="slbl">Types</div></div>
+        </div>
+      </div>
+      <div class="hint">
+        <strong>📖 Cara pakai</strong>
+        1. Upload file <b>.mcstructure</b><br>
+        2. Tab <b>3D</b> → putar/zoom dengan jari<br>
+        3. Tab <b>Steps</b> → panduan layer per layer<br>
+        4. Tab <b>Blocks</b> → daftar semua blok yang dibutuhkan
+      </div>
+    </div>
+  </div>
+  <div class="view" id="v-v3d">
+    <div class="tb3d">
+      <button class="t3b on" id="vv3d">🎲 3D</button>
+      <button class="t3b" id="vTop">⬆ Top</button>
+      <button class="t3b" id="vFront">⬛ Front</button>
+      <button class="t3b" id="vSide">◀ Side</button>
+      <button class="t3b" id="vReset">⟳</button>
+      <div class="lyr">Y:<input type="range" id="lSlide" min="-1" max="0" value="-1"><span id="lVal">All</span></div>
+    </div>
+    <div class="cvw">
+      <canvas id="cv"></canvas>
+      <div class="e3d" id="e3d"><div class="e3i">🏰</div><div class="e3t">Upload .mcstructure<br>untuk mulai</div></div>
+      <div class="ov" id="ov"><div class="spin"></div><div class="ovt" id="ovt">Memuat...</div></div>
+    </div>
+  </div>
+  <div class="view" id="v-steps">
+    <div class="snav">
+      <button class="sb" id="sPrev" disabled>◀ Prev</button>
+      <button class="sb nx" id="sNext" disabled>Next ▶</button>
+    </div>
+    <div class="sinf">
+      <div class="sitp"><div class="silb" id="sLbl">LAYER — / —</div><div class="sict" id="sCnt"></div></div>
+      <div class="prg"><div class="prgb" id="prgb" style="width:0%"></div></div>
+    </div>
+    <div class="ll" id="lList"><div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Upload struktur dulu</div></div>
+  </div>
+  <div class="view" id="v-blocks">
+    <div class="bsw"><input class="bsi" id="bSrch" placeholder="🔍 Cari block..." type="search"></div>
+    <div class="bl" id="bList"><div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Upload struktur dulu</div></div>
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// ══════════════════════════════════════════
+// TEXTURE  — load dari GitHub CDN (Java ≈ Bedrock untuk blok umum)
+// ══════════════════════════════════════════
+const CDN = 'https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures/block/';
+
+// Map nama blok Bedrock → nama file texture Java (kebanyakan sama)
+const TEX_MAP = {
+  // --- kayu ---
+  oak_planks:'oak_planks',oak_log:'oak_log',oak_log_top:'oak_log_top',
+  oak_leaves:'oak_leaves',oak_slab:'oak_planks',oak_stairs:'oak_planks',
+  oak_door:'oak_door_bottom',oak_trapdoor:'oak_trapdoor',
+  spruce_planks:'spruce_planks',spruce_log:'spruce_log',spruce_log_top:'spruce_log_top',
+  spruce_leaves:'spruce_leaves',spruce_door:'spruce_door_bottom',
+  spruce_trapdoor:'spruce_trapdoor',spruce_slab:'spruce_planks',
+  spruce_stairs:'spruce_planks',
+  birch_planks:'birch_planks',birch_log:'birch_log',birch_leaves:'birch_leaves',
+  dark_oak_planks:'dark_oak_planks',dark_oak_log:'dark_oak_log',
+  dark_oak_leaves:'dark_oak_leaves',dark_oak_door:'dark_oak_door_bottom',
+  acacia_planks:'acacia_planks',acacia_log:'acacia_log',
+  jungle_planks:'jungle_planks',jungle_log:'jungle_log',
+  stripped_oak_log:'stripped_oak_log',stripped_oak_wood:'stripped_oak_log',
+  stripped_spruce_log:'stripped_spruce_log',stripped_spruce_wood:'stripped_spruce_log',
+  stripped_dark_oak_log:'stripped_dark_oak_log',stripped_dark_oak_wood:'stripped_dark_oak_log',
+  stripped_birch_log:'stripped_birch_log',stripped_jungle_log:'stripped_jungle_log',
+  stripped_acacia_log:'stripped_acacia_log',
+  // --- batu ---
+  stone:'stone',cobblestone:'cobblestone',mossy_cobblestone:'mossy_cobblestone',
+  stone_bricks:'stone_bricks',mossy_stone_bricks:'mossy_stone_bricks',
+  cracked_stone_bricks:'cracked_stone_bricks',chiseled_stone_bricks:'chiseled_stone_bricks',
+  smooth_stone:'smooth_stone',stone_slab:'smooth_stone',stone_brick_slab:'stone_bricks',
+  andesite:'andesite',polished_andesite:'polished_andesite',
+  diorite:'diorite',polished_diorite:'polished_diorite',
+  granite:'granite',polished_granite:'polished_granite',
+  gravel:'gravel',sand:'sand',
+  // --- tanah ---
+  dirt:'dirt',grass_block:'grass_block_top',grass_path:'dirt_path_top',
+  podzol:'podzol_top',rooted_dirt:'rooted_dirt',coarse_dirt:'coarse_dirt',
+  // --- quartz ---
+  quartz_block:'quartz_block_side',smooth_quartz:'quartz_block_bottom',
+  smooth_quartz_stairs:'quartz_block_bottom',smooth_quartz_slab:'quartz_block_bottom',
+  quartz_slab:'quartz_block_side',quartz_stairs:'quartz_block_side',
+  chiseled_quartz_block:'chiseled_quartz_block_side',
+  quartz_pillar:'quartz_pillar',
+  // --- kaca ---
+  glass:'glass',glass_pane:'glass',
+  white_stained_glass:'white_stained_glass',black_stained_glass:'black_stained_glass',
+  gray_stained_glass:'gray_stained_glass',light_gray_stained_glass:'light_gray_stained_glass',
+  white_stained_glass_pane:'white_stained_glass',black_stained_glass_pane:'black_stained_glass',
+  gray_stained_glass_pane:'gray_stained_glass',
+  // --- concrete ---
+  white_concrete:'white_concrete',gray_concrete:'gray_concrete',
+  black_concrete:'black_concrete',red_concrete:'red_concrete',
+  blue_concrete:'blue_concrete',green_concrete:'green_concrete',
+  yellow_concrete:'yellow_concrete',orange_concrete:'orange_concrete',
+  purple_concrete:'purple_concrete',cyan_concrete:'cyan_concrete',
+  lime_concrete:'lime_concrete',magenta_concrete:'magenta_concrete',
+  pink_concrete:'pink_concrete',light_blue_concrete:'light_blue_concrete',
+  light_gray_concrete:'light_gray_concrete',brown_concrete:'brown_concrete',
+  // --- wool/carpet ---
+  white_wool:'white_wool',gray_wool:'gray_wool',black_wool:'black_wool',
+  red_wool:'red_wool',blue_wool:'blue_wool',green_wool:'green_wool',
+  yellow_wool:'yellow_wool',orange_wool:'orange_wool',purple_wool:'purple_wool',
+  cyan_wool:'cyan_wool',lime_wool:'lime_wool',magenta_wool:'magenta_wool',
+  pink_wool:'pink_wool',light_blue_wool:'light_blue_wool',
+  light_gray_wool:'light_gray_wool',brown_wool:'brown_wool',
+  white_carpet:'white_wool',gray_carpet:'gray_wool',black_carpet:'black_wool',
+  red_carpet:'red_wool',blue_carpet:'blue_wool',green_carpet:'green_wool',
+  yellow_carpet:'yellow_wool',orange_carpet:'orange_wool',
+  purple_carpet:'purple_wool',cyan_carpet:'cyan_wool',
+  lime_carpet:'lime_wool',light_gray_carpet:'light_gray_wool',
+  // --- terracotta ---
+  terracotta:'terracotta',white_terracotta:'white_terracotta',
+  gray_terracotta:'gray_terracotta',
+  // --- ore & mineral ---
+  coal_ore:'coal_ore',iron_ore:'iron_ore',gold_ore:'gold_ore',
+  diamond_ore:'diamond_ore',emerald_ore:'emerald_ore',
+  iron_block:'iron_block',gold_block:'gold_block',diamond_block:'diamond_block',
+  coal_block:'coal_block',emerald_block:'emerald_block',
+  // --- blackstone ---
+  blackstone:'blackstone',polished_blackstone:'polished_blackstone',
+  polished_blackstone_bricks:'polished_blackstone_bricks',
+  polished_blackstone_button:'polished_blackstone',
+  chiseled_polished_blackstone:'chiseled_polished_blackstone',
+  // --- deepslate ---
+  deepslate:'deepslate',cobbled_deepslate:'cobbled_deepslate',
+  polished_deepslate:'polished_deepslate',deepslate_bricks:'deepslate_bricks',
+  deepslate_tiles:'deepslate_tiles',
+  // --- nether ---
+  netherrack:'netherrack',soul_sand:'soul_sand',nether_brick:'nether_bricks',
+  red_nether_brick:'red_nether_bricks',basalt:'basalt_side',
+  // --- misc alam ---
+  obsidian:'obsidian',bedrock:'bedrock',clay:'clay',ice:'ice',
+  packed_ice:'packed_ice',snow:'snow',tuff:'tuff',
+  // --- tanaman ---
+  oak_leaves:'oak_leaves',spruce_leaves:'spruce_leaves',
+  birch_leaves:'birch_leaves',dark_oak_leaves:'dark_oak_leaves',
+  acacia_leaves:'acacia_leaves',jungle_leaves:'jungle_leaves',
+  short_grass:'short_grass',tall_grass:'tall_grass',fern:'fern',dead_bush:'dead_bush',
+  // --- furniture/utility ---
+  crafting_table:'crafting_table_top',furnace:'furnace_front_off',
+  chest:'chest',barrel:'barrel_top',
+  bookshelf:'bookshelf',lectern:'lectern_top',
+  cauldron:'cauldron_side',lantern:'lantern',sea_lantern:'sea_lantern',
+  glowstone:'glowstone',shroomlight:'shroomlight',
+  bed:'red_bed_head_top',
+  // --- cair ---
+  water:'water_still',lava:'lava_still',
+  // --- lain ---
+  hay_block:'hay_block_side',tnt:'tnt_side',sponge:'sponge',
+  melon:'melon_side',pumpkin:'pumpkin_side',
+  prismarine:'prismarine',prismarine_bricks:'prismarine_bricks',
+  dark_prismarine:'dark_prismarine',
+  purpur_block:'purpur_block',magma:'magma',
+  moss_block:'moss_block',mud:'mud',mud_bricks:'mud_bricks',
+  calcite:'calcite',smooth_basalt:'smooth_basalt',
+  copper_block:'copper_block',raw_copper_block:'raw_copper_block',
+};
+
+const texCache = {};
+const loader3 = new THREE.TextureLoader();
+
+function loadTex(name) {
+  if (texCache[name] !== undefined) return texCache[name];
+  const file = TEX_MAP[name];
+  if (!file) { texCache[name] = null; return null; }
+  const url = CDN + file + '.png';
+  const t = loader3.load(url, undefined, undefined, () => { texCache[name] = null; });
+  t.magFilter = THREE.NearestFilter;
+  t.minFilter = THREE.NearestFilter;
+  texCache[name] = t;
+  return t;
+}
+
+function getTexURL(name) {
+  const file = TEX_MAP[name];
+  return file ? CDN + file + '.png' : null;
+}
+
+// ══════════════════════════════════════════
+// NBT PARSER (Bedrock Little-Endian)
+// ══════════════════════════════════════════
+class NBT {
+  constructor(b) { this.v = new DataView(b); this.o = 0; }
+  u8()  { return this.v.getUint8(this.o++); }
+  i8()  { return this.v.getInt8(this.o++); }
+  i16() { const n=this.v.getInt16(this.o,true); this.o+=2; return n; }
+  u16() { const n=this.v.getUint16(this.o,true); this.o+=2; return n; }
+  i32() { const n=this.v.getInt32(this.o,true); this.o+=4; return n; }
+  i64() { this.o+=8; return 0; }
+  f32() { const n=this.v.getFloat32(this.o,true); this.o+=4; return n; }
+  f64() { const n=this.v.getFloat64(this.o,true); this.o+=8; return n; }
+  str() { const l=this.u16(), b=new Uint8Array(this.v.buffer,this.o,l); this.o+=l; return new TextDecoder().decode(b); }
+  tag(t) {
+    if(t===1)  return this.i8();
+    if(t===2)  return this.i16();
+    if(t===3)  return this.i32();
+    if(t===4)  return this.i64();
+    if(t===5)  return this.f32();
+    if(t===6)  return this.f64();
+    if(t===7)  { const l=this.i32(), a=new Int8Array(this.v.buffer,this.o,l); this.o+=l; return Array.from(a); }
+    if(t===8)  return this.str();
+    if(t===9)  { const et=this.u8(), l=this.i32(), a=[]; for(let i=0;i<l;i++) a.push(this.tag(et)); return a; }
+    if(t===10) { const o={}; for(;;){const tt=this.u8();if(!tt)break;const n=this.str();o[n]=this.tag(tt);} return o; }
+    if(t===11) { const l=this.i32(), a=[]; for(let i=0;i<l;i++) a.push(this.i32()); return a; }
+    if(t===12) { const l=this.i32(), a=[]; for(let i=0;i<l;i++) a.push(this.i64()); return a; }
+    throw new Error('NBT tag '+t);
+  }
+  parse() { const t=this.u8(); this.str(); return this.tag(t); }
+}
+
+// ══════════════════════════════════════════
+// STRUCTURE PARSER
+// ══════════════════════════════════════════
+function parseStructure(root) {
+  const W=root.size[0], H=root.size[1], D=root.size[2];
+  const palette = root.structure.palette.default.block_palette;
+  const layer0  = root.structure.block_indices[0];
+
+  // ✅ FORMULA BENAR (diverifikasi dengan debug ASCII):
+  // index = z + x*D + y*D*W
+  // Jadi: z = i%D, x = floor(i/D)%W, y = floor(i/(D*W))
+  const blocks = [];
+  for (let i = 0; i < layer0.length; i++) {
+    const pi = layer0[i];
+    if (pi < 0 || pi >= palette.length) continue;
+    const name = (palette[pi].name || '').replace('minecraft:', '').toLowerCase();
+    if (!name || name === 'air') continue;
+    const z = i % D;
+    const x = Math.floor(i / D) % W;
+    const y = Math.floor(i / (D * W));
+    blocks.push({ x, y, z, name });
+  }
+  return { blocks, W, H, D };
+}
+
+// ══════════════════════════════════════════
+// FALLBACK COLORS
+// ══════════════════════════════════════════
+const COL = {
+  stone:'#7d7d7d',granite:'#9c6b54',diorite:'#c2c2c2',andesite:'#8a8a8a',
+  smooth_stone:'#909090',cobblestone:'#6a6a6a',mossy_cobblestone:'#5a6a5a',
+  stone_bricks:'#6a6a7a',bricks:'#8a4a3a',
+  dirt:'#8B6344',grass_block:'#5d9e3f',sand:'#d4c06a',gravel:'#9a9a8a',
+  oak_log:'#6b4e2a',oak_planks:'#a0763a',oak_leaves:'#3a7a2a',
+  spruce_planks:'#7a5530',spruce_log:'#4a3520',spruce_leaves:'#2a4a1a',
+  dark_oak_planks:'#3a2810',dark_oak_log:'#2a1a08',dark_oak_leaves:'#1a3a0a',
+  birch_planks:'#d4c890',stripped_oak_wood:'#b08040',stripped_oak_log:'#b08040',
+  glass:'#b0d8f080',white_stained_glass:'#ffffff70',black_stained_glass:'#18181890',
+  white_stained_glass_pane:'#ffffff60',black_stained_glass_pane:'#18181880',
+  gray_stained_glass:'#66666680',gray_stained_glass_pane:'#66666670',
+  water:'#2d6fa8cc',lava:'#c84a00',
+  white_concrete:'#e8e8e8',gray_concrete:'#686868',black_concrete:'#1e1e1e',
+  light_gray_concrete:'#bdbdbd',red_concrete:'#8f2020',blue_concrete:'#2348a0',
+  smooth_quartz:'#e0ddd8',smooth_quartz_stairs:'#e0ddd8',smooth_quartz_slab:'#e0ddd8',
+  quartz_block:'#eae7d8',
+  white_carpet:'#f0f0f0',gray_carpet:'#707070',black_carpet:'#181818',
+  light_gray_carpet:'#c0c0c0',red_carpet:'#a02020',
+  white_wool:'#f0f0f0',gray_wool:'#707070',black_wool:'#181818',
+  red_wool:'#c03030',light_gray_wool:'#c0c0c0',
+  polished_blackstone:'#25252e',polished_blackstone_bricks:'#201e28',
+  polished_blackstone_button:'#25252e',
+  blackstone:'#1c1a22',obsidian:'#1e1428',bedrock:'#2a2a2a',
+  chest:'#a07030',lantern:'#d0a020',sea_lantern:'#a0d8d0',
+  glowstone:'#d8c050',cauldron:'#383838',
+  short_grass:'#4a8a2a',tall_grass:'#4a8a2a',fern:'#3a7020',
+  bed:'#c03030',coal_ore:'#4a4a4a',iron_ore:'#8a7a68',
+  iron_block:'#d0d0d0',gold_block:'#e8c030',diamond_block:'#50d8d8',
+  netherrack:'#6a2828',soul_sand:'#584838',
+};
+function blockColor(n) {
+  if (COL[n]) return COL[n];
+  for (const [k,v] of Object.entries(COL)) if (n.includes(k)) return v;
+  let h=0; for (const c of n) h=(h<<5)-h+c.charCodeAt(0)|0;
+  return `hsl(${Math.abs(h)%360},38%,48%)`;
+}
+function isTransparent(n) {
+  return n.includes('glass')||n.includes('water')||n.includes('leaves')||n==='ice';
+}
+
+// ══════════════════════════════════════════
+// THREE.JS SETUP
+// ══════════════════════════════════════════
+const cv  = document.getElementById('cv');
+const ren = new THREE.WebGLRenderer({ canvas:cv, antialias:false });
+ren.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const sc = new THREE.Scene();
+sc.background = new THREE.Color(0x080812);
+sc.fog = new THREE.FogExp2(0x080812, 0.011);
+
+const cam = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
+sc.add(new THREE.AmbientLight(0x9090b0, 0.9));
+const dL = new THREE.DirectionalLight(0xffffff, 0.9); dL.position.set(1,2,0.8); sc.add(dL);
+const dL2 = new THREE.DirectionalLight(0x4060ff, 0.25); dL2.position.set(-1,-1,-1); sc.add(dL2);
+const gridH = new THREE.GridHelper(200, 200, 0x1e1e30, 0x161624); sc.add(gridH);
+
+const ctr = new THREE.Vector3();
+let sph = { r:30, th:0.6, ph:0.8 };
+function moveCam() {
+  cam.position.set(
+    ctr.x + sph.r*Math.sin(sph.ph)*Math.sin(sph.th),
+    ctr.y + sph.r*Math.cos(sph.ph),
+    ctr.z + sph.r*Math.sin(sph.ph)*Math.cos(sph.th)
+  );
+  cam.lookAt(ctr);
+}
+
+let md=false, mpx=0, mpy=0;
+cv.addEventListener('mousedown', e=>{md=true;mpx=e.clientX;mpy=e.clientY});
+window.addEventListener('mouseup', ()=>md=false);
+window.addEventListener('mousemove', e=>{
+  if(!md) return;
+  sph.th -= (e.clientX-mpx)*0.008;
+  sph.ph = Math.max(.05, Math.min(Math.PI-.05, sph.ph-(e.clientY-mpy)*0.008));
+  mpx=e.clientX; mpy=e.clientY; moveCam();
+});
+cv.addEventListener('wheel', e=>{sph.r=Math.max(3,Math.min(300,sph.r+e.deltaY*.04));moveCam();},{passive:true});
+
+let t1=null, tp=null;
+cv.addEventListener('touchstart', e=>{
+  if(e.touches.length===1) t1={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  if(e.touches.length===2) tp=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+},{passive:true});
+cv.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  if(e.touches.length===1&&t1){
+    const dx=e.touches[0].clientX-t1.x, dy=e.touches[0].clientY-t1.y;
+    sph.th-=dx*.008; sph.ph=Math.max(.05,Math.min(Math.PI-.05,sph.ph-dy*.008));
+    t1={x:e.touches[0].clientX,y:e.touches[0].clientY}; moveCam();
+  }
+  if(e.touches.length===2&&tp!==null){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    sph.r=Math.max(3,Math.min(300,sph.r-(d-tp)*.08)); tp=d; moveCam();
+  }
+},{passive:false});
+cv.addEventListener('touchend', ()=>{t1=null;tp=null;},{passive:true});
+
+new ResizeObserver(()=>{
+  const w=cv.clientWidth, h=cv.clientHeight;
+  ren.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix();
+}).observe(cv);
+(function loop(){requestAnimationFrame(loop);ren.render(sc,cam);})();
+
+// ══════════════════════════════════════════
+// SCENE BUILD
+// ══════════════════════════════════════════
+const GEO = new THREE.BoxGeometry(1,1,1);
+const DM  = new THREE.Object3D();
+let meshes=[], showWire=false, filterY=-1, STRUCT=null;
+const matCache={};
+
+function getMat(name) {
+  if (matCache[name]) return matCache[name];
+  const tex = loadTex(name);
+  const transp = isTransparent(name);
+  const mat = tex
+    ? new THREE.MeshLambertMaterial({ map:tex, transparent:transp, opacity:transp?0.75:1, alphaTest:0.1 })
+    : new THREE.MeshLambertMaterial({ color:blockColor(name), transparent:transp&&!tex, opacity:transp?0.6:1 });
+  matCache[name] = mat;
+  return mat;
+}
+
+function buildScene() {
+  meshes.forEach(m => sc.remove(m)); meshes=[];
+  if (!STRUCT) return;
+  const {blocks,W,H,D} = STRUCT;
+  ctr.set(W/2, H/2, D/2);
+  gridH.position.set(W/2, 0, D/2);
+
+  const byName={};
+  for (const b of blocks) {
+    if (filterY>=0 && b.y!==filterY) continue;
+    (byName[b.name]||(byName[b.name]=[])).push(b);
+  }
+
+  // Opaque first, then transparent
+  const opaque = Object.entries(byName).filter(([n])=>!isTransparent(n));
+  const transp = Object.entries(byName).filter(([n])=>isTransparent(n));
+
+  for (const [name,list] of [...opaque,...transp]) {
+    const m = new THREE.InstancedMesh(GEO, getMat(name), list.length);
+    list.forEach((b,i)=>{
+      DM.position.set(b.x-W/2+.5, b.y-H/2+.5, b.z-D/2+.5);
+      DM.updateMatrix(); m.setMatrixAt(i, DM.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    sc.add(m); meshes.push(m);
+
+    if (showWire) {
+      const wm = new THREE.InstancedMesh(GEO, new THREE.MeshBasicMaterial({color:0x282838,wireframe:true}), list.length);
+      list.forEach((b,i)=>{
+        DM.position.set(b.x-W/2+.5, b.y-H/2+.5, b.z-D/2+.5);
+        DM.updateMatrix(); wm.setMatrixAt(i, DM.matrix);
+      });
+      wm.instanceMatrix.needsUpdate=true; sc.add(wm); meshes.push(wm);
+    }
+  }
+  sph.r = Math.max(W,H,D)*1.8; moveCam();
+}
+
+// ══════════════════════════════════════════
+// BLOCK LIST
+// ══════════════════════════════════════════
+let allCounts = [];
+function renderBList(q='') {
+  const el = document.getElementById('bList'); el.innerHTML='';
+  const list = q ? allCounts.filter(([n])=>n.includes(q.toLowerCase())) : allCounts;
+  if (!list.length) { el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Tidak ada</div>'; return; }
+  list.forEach(([name,cnt])=>{
+    const d = document.createElement('div'); d.className='bi';
+    const url = getTexURL(name);
+    if (url) {
+      d.innerHTML=`<img class="bth" src="${url}" alt="${name}" onerror="this.style.display='none';this.nextSibling.style.display='block'"><div class="bth" style="display:none;background:${blockColor(name)}"></div><span class="bn">${name.replace(/_/g,' ')}</span><span class="bc">×${cnt}</span>`;
+    } else {
+      d.innerHTML=`<div class="bth" style="background:${blockColor(name)}"></div><span class="bn">${name.replace(/_/g,' ')}</span><span class="bc">×${cnt}</span>`;
+    }
+    el.appendChild(d);
+  });
+}
+document.getElementById('bSrch').addEventListener('input', e=>renderBList(e.target.value));
+function buildBList() {
+  if (!STRUCT) return;
+  const c={};
+  STRUCT.blocks.forEach(b=>c[b.name]=(c[b.name]||0)+1);
+  allCounts = Object.entries(c).sort((a,b)=>b[1]-a[1]);
+  renderBList();
+}
+
+// ══════════════════════════════════════════
+// LAYER STEPS
+// ══════════════════════════════════════════
+let stepLayers=[], curStep=0;
+function buildSteps() {
+  if (!STRUCT) return;
+  const {blocks,W,D} = STRUCT;
+  const ys = [...new Set(blocks.map(b=>b.y))].sort((a,b)=>a-b);
+  stepLayers=ys; curStep=0;
+  const el = document.getElementById('lList'); el.innerHTML='';
+  const cs = Math.max(4, Math.min(9, Math.floor(160/Math.max(W,D))));
+
+  ys.forEach(y=>{
+    const lb = blocks.filter(b=>b.y===y);
+    const types = [...new Set(lb.map(b=>b.name))];
+
+    // Mini grid — X horizontal, Z vertical (top-down view)
+    const cells = Array(W*D).fill(0).map((_,i)=>{
+      const bx=i%W, bz=Math.floor(i/W);
+      const b = lb.find(b=>b.x===bx&&b.z===bz);
+      if (!b) return `<div style="width:${cs}px;height:${cs}px;background:#080810"></div>`;
+      const url = getTexURL(b.name);
+      const bg = blockColor(b.name);
+      return url
+        ? `<div style="width:${cs}px;height:${cs}px;background:${bg}" title="${b.name}"><img src="${url}" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block" onerror="this.remove()"></div>`
+        : `<div style="width:${cs}px;height:${cs}px;background:${bg}" title="${b.name}"></div>`;
+    }).join('');
+
+    const card = document.createElement('div'); card.className='lc'; card.dataset.y=y;
+    card.innerHTML=`
+      <div class="lch">
+        <span class="lcy">Layer Y=${y}</span>
+        <span class="lcm">${lb.length} blok · ${types.length} jenis</span>
+      </div>
+      <div class="lcb">
+        <div class="lct">${types.slice(0,4).map(n=>n.replace(/_/g,' ')).join(', ')}${types.length>4?` +${types.length-4}`:''}</div>
+        <div class="mg" style="grid-template-columns:repeat(${W},${cs}px)">${cells}</div>
+      </div>`;
+    card.addEventListener('click', ()=>goStep(ys.indexOf(y)));
+    el.appendChild(card);
+  });
+  updateStepUI();
+}
+
+function goStep(i) {
+  curStep = Math.max(0, Math.min(stepLayers.length-1, i));
+  const y = stepLayers[curStep];
+  filterY=y;
+  document.getElementById('lSlide').value=y;
+  document.getElementById('lVal').textContent='Y'+y;
+  buildScene(); updateStepUI();
+}
+function updateStepUI() {
+  const total=stepLayers.length, y=stepLayers[curStep]??-1;
+  const pct = total>1 ? curStep/(total-1)*100 : 0;
+  document.getElementById('sLbl').textContent=`LAYER ${curStep+1} / ${total||'—'}`;
+  document.getElementById('sCnt').textContent=y>=0?`Y=${y}`:'';
+  document.getElementById('prgb').style.width=pct+'%';
+  document.getElementById('sPrev').disabled=curStep<=0;
+  document.getElementById('sNext').disabled=curStep>=total-1||!total;
+  document.querySelectorAll('.lc').forEach(c=>{
+    const on=parseInt(c.dataset.y)===y;
+    c.classList.toggle('on',on);
+    if(on) c.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });
+}
+document.getElementById('sPrev').addEventListener('click', ()=>goStep(curStep-1));
+document.getElementById('sNext').addEventListener('click', ()=>goStep(curStep+1));
+
+// ══════════════════════════════════════════
+// UPLOAD
+// ══════════════════════════════════════════
+function showOv(t){document.getElementById('ov').classList.add('on');document.getElementById('ovt').textContent=t;}
+function hideOv(){document.getElementById('ov').classList.remove('on');}
+function toast(msg,err=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast on'+(err?' err':'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),2800);
+}
+
+async function loadFile(file) {
+  if (!file.name.endsWith('.mcstructure')) { toast('Perlu .mcstructure!',true); return; }
+  showOv('Parsing...');
+  document.getElementById('e3d').style.display='none';
+  try {
+    const root = new NBT(await file.arrayBuffer()).parse();
+    const s = parseStructure(root);
+    if (!s.blocks.length) throw new Error('Tidak ada blok');
+    STRUCT=s; filterY=-1;
+
+    document.getElementById('dropLbl').style.display='none';
+    document.getElementById('fileRow').classList.add('on');
+    document.getElementById('fName').textContent=file.name;
+    document.getElementById('fMeta').textContent=`${s.W}×${s.H}×${s.D} · ${s.blocks.length} blok`;
+    document.getElementById('stCard').style.display='';
+    document.getElementById('ss').textContent=`${s.W}×${s.H}×${s.D}`;
+    document.getElementById('sb2').textContent=s.blocks.length;
+    document.getElementById('sl2').textContent=s.H;
+    document.getElementById('st').textContent=new Set(s.blocks.map(b=>b.name)).size;
+    const sl=document.getElementById('lSlide'); sl.min=-1; sl.max=s.H-1; sl.value=-1;
+
+    buildScene(); buildBList(); buildSteps();
+    toast(`✅ ${s.blocks.length} blok dimuat`);
+    switchTab('v3d');
+  } catch(e) {
+    toast('Error: '+e.message, true);
+    document.getElementById('e3d').style.display='flex';
+  }
+  hideOv();
+}
+
+const lbl = document.getElementById('dropLbl');
+lbl.addEventListener('dragover', e=>{e.preventDefault();lbl.classList.add('drag');});
+lbl.addEventListener('dragleave', ()=>lbl.classList.remove('drag'));
+lbl.addEventListener('drop', e=>{e.preventDefault();lbl.classList.remove('drag');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+document.getElementById('fileIn').addEventListener('change', e=>{if(e.target.files[0])loadFile(e.target.files[0]);e.target.value='';});
+document.getElementById('fDel').addEventListener('click', ()=>{
+  STRUCT=null; filterY=-1; meshes.forEach(m=>sc.remove(m)); meshes=[];
+  document.getElementById('dropLbl').style.display='';
+  document.getElementById('fileRow').classList.remove('on');
+  document.getElementById('stCard').style.display='none';
+  document.getElementById('e3d').style.display='flex';
+  document.getElementById('lList').innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Upload struktur dulu</div>';
+  document.getElementById('bList').innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Upload struktur dulu</div>';
+});
+
+// ══════════════════════════════════════════
+// TOOLBAR & TABS
+// ══════════════════════════════════════════
+function setView(id) {
+  ['vv3d','vTop','vFront','vSide'].forEach(k=>document.getElementById(k).classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  if(id==='vv3d')  {sph.th=0.6;sph.ph=0.8;}
+  if(id==='vTop')  {sph.ph=0.05;sph.th=0;}
+  if(id==='vFront'){sph.ph=Math.PI/2;sph.th=0;}
+  if(id==='vSide') {sph.ph=Math.PI/2;sph.th=Math.PI/2;}
+  moveCam();
+}
+document.getElementById('vv3d').addEventListener('click',()=>setView('vv3d'));
+document.getElementById('vTop').addEventListener('click',()=>setView('vTop'));
+document.getElementById('vFront').addEventListener('click',()=>setView('vFront'));
+document.getElementById('vSide').addEventListener('click',()=>setView('vSide'));
+document.getElementById('vReset').addEventListener('click',()=>setView('vv3d'));
+document.getElementById('bWire').addEventListener('click',function(){showWire=!showWire;this.classList.toggle('on',showWire);buildScene();});
+document.getElementById('bAll').addEventListener('click',()=>{filterY=-1;document.getElementById('lSlide').value=-1;document.getElementById('lVal').textContent='All';buildScene();});
+document.getElementById('lSlide').addEventListener('input',e=>{
+  filterY=parseInt(e.target.value);
+  document.getElementById('lVal').textContent=filterY<0?'All':'Y'+filterY;
+  buildScene();
+});
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.t===id));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+id));
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.t)));
+
+moveCam();
+</script>
+</body>
+</html>
