@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YANZ Build Guide - Pro Max v2</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: sans-serif; color: white; }
+        canvas { display: block; }
+        #ui-container { position: absolute; top: 15px; left: 15px; background: rgba(20, 20, 20, 0.95); padding: 15px; border-radius: 10px; border: 1px solid #4CAF50; backdrop-filter: blur(10px); width: 290px; box-sizing: border-box; max-height: 90vh; overflow-y: auto; }
+        h2 { margin: 0 0 10px 0; font-size: 1.1rem; color: #4CAF50; letter-spacing: 1px; }
+        .control-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #ddd; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #4CAF50; }
+        input[type="file"] { font-size: 0.8rem; background: #2a2a2a; padding: 6px; border-radius: 6px; width: 100%; box-sizing: border-box; color: #ccc; border: 1px solid #444; }
+        #status { margin-top: 10px; font-size: 0.8rem; color: #4CAF50; padding: 8px; background: #111; border-radius: 6px; border: 1px solid #333; word-wrap: break-word; font-weight: bold; }
+        #ui-container { touch-action: none; pointer-events: auto; }
+        .info-text { font-size: 0.75rem; color: #888; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <div id="ui-container">
+        <h2>YANZ Build Guide v2</h2>
+        <div class="control-group">
+            <label>Upload .mcstructure</label>
+            <input type="file" id="file-upload" accept=".mcstructure" />
+        </div>
+        <div class="control-group">
+            <label for="layer-slider">Layer Sumbu Y: <span id="layer-val">0</span></label>
+            <input type="range" id="layer-slider" min="0" max="0" value="0" step="1" disabled>
+        </div>
+        <div id="status">Status: Menunggu file...</div>
+        <div class="info-text">✓ Full Block Registry<br>✓ Rotasi Dinamis<br>✓ Model Khusus</div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- 1. SETUP ENGINE ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#87CEEB'); 
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(15, 15, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true }); 
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.1;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(20, 40, 20);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // --- 2. BLOCK REGISTRY LENGKAP DENGAN ROTASI & MODEL KHUSUS ---
+        const textureLoader = new THREE.TextureLoader();
+        const materialCache = {};
+        const geometryCache = {};
+        const defaultGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const TEXTURE_CDN = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20/assets/minecraft/textures/block/";
+
+        // Konstanta untuk rotasi blok
+        const FACING_DIRECTIONS = {
+            down: 0, up: 1, north: 2, south: 3, west: 4, east: 5
+        };
+
+        const BLOCK_REGISTRY = {
+            // ===== BASIC BLOCKS =====
+            'minecraft:grass_block': {
+                textures: ['grass_block_side', 'grass_block_side', 'grass_block_top', 'dirt', 'grass_block_side', 'grass_block_side']
+            },
+            'minecraft:dirt': { textures: 'dirt' },
+            'minecraft:dirt_path': { textures: 'dirt_path_top', geometry: new THREE.BoxGeometry(1, 0.9375, 1), offset: [0, -0.03125, 0] },
+            'minecraft:stone': { textures: 'stone' },
+            'minecraft:granite': { textures: 'granite' },
+            'minecraft:diorite': { textures: 'diorite' },
+            'minecraft:andesite': { textures: 'andesite' },
+            'minecraft:deepslate': { textures: 'deepslate' },
+            'minecraft:cobblestone': { textures: 'cobblestone' },
+            'minecraft:oak_log': {
+                textures: ['oak_log_side', 'oak_log_side', 'oak_log_top', 'oak_log_top', 'oak_log_side', 'oak_log_side']
+            },
+            'minecraft:spruce_log': {
+                textures: ['spruce_log_side', 'spruce_log_side', 'spruce_log_top', 'spruce_log_top', 'spruce_log_side', 'spruce_log_side']
+            },
+            'minecraft:birch_log': {
+                textures: ['birch_log_side', 'birch_log_side', 'birch_log_top', 'birch_log_top', 'birch_log_side', 'birch_log_side']
+            },
+            'minecraft:jungle_log': {
+                textures: ['jungle_log_side', 'jungle_log_side', 'jungle_log_top', 'jungle_log_top', 'jungle_log_side', 'jungle_log_side']
+            },
+            'minecraft:acacia_log': {
+                textures: ['acacia_log_side', 'acacia_log_side', 'acacia_log_top', 'acacia_log_top', 'acacia_log_side', 'acacia_log_side']
+            },
+            'minecraft:dark_oak_log': {
+                textures: ['dark_oak_log_side', 'dark_oak_log_side', 'dark_oak_log_top', 'dark_oak_log_top', 'dark_oak_log_side', 'dark_oak_log_side']
+            },
+            'minecraft:oak_leaves': { textures: 'oak_leaves', transparent: true },
+            'minecraft:spruce_leaves': { textures: 'spruce_leaves', transparent: true },
+            'minecraft:birch_leaves': { textures: 'birch_leaves', transparent: true },
+            'minecraft:jungle_leaves': { textures: 'jungle_leaves', transparent: true },
+            'minecraft:acacia_leaves': { textures: 'acacia_leaves', transparent: true },
+            'minecraft:dark_oak_leaves': { textures: 'dark_oak_leaves', transparent: true },
+            
+            // ===== SLABS & STAIRS =====
+            'minecraft:stone_slab': { textures: 'stone', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:oak_slab': { textures: 'oak_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:spruce_slab': { textures: 'spruce_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:birch_slab': { textures: 'birch_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:jungle_slab': { textures: 'jungle_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:acacia_slab': { textures: 'acacia_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:dark_oak_slab': { textures: 'dark_oak_planks', geometry: new THREE.BoxGeometry(1, 0.5, 1), offset: [0, -0.25, 0] },
+            'minecraft:stone_stairs': { textures: 'stone', custom: 'stairs' },
+            'minecraft:oak_stairs': { textures: 'oak_planks', custom: 'stairs' },
+            'minecraft:spruce_stairs': { textures: 'spruce_planks', custom: 'stairs' },
+            'minecraft:birch_stairs': { textures: 'birch_planks', custom: 'stairs' },
+            
+            // ===== PLANKS =====
+            'minecraft:oak_planks': { textures: 'oak_planks' },
+            'minecraft:spruce_planks': { textures: 'spruce_planks' },
+            'minecraft:birch_planks': { textures: 'birch_planks' },
+            'minecraft:jungle_planks': { textures: 'jungle_planks' },
+            'minecraft:acacia_planks': { textures: 'acacia_planks' },
+            'minecraft:dark_oak_planks': { textures: 'dark_oak_planks' },
+            
+            // ===== REDSTONE BLOCKS =====
+            'minecraft:redstone_wire': {
+                textures: 'redstone_dust_dot',
+                geometry: new THREE.BoxGeometry(1, 0.05, 1),
+                offset: [0, -0.475, 0]
+            },
+            'minecraft:redstone_block': { textures: 'redstone_block' },
+            'minecraft:redstone_lamp': { textures: 'redstone_lamp_off' },
+            'minecraft:redstone_lamp_lit': { textures: 'redstone_lamp_on' },
+            'minecraft:repeater': {
+                textures: 'repeater_off',
+                geometry: new THREE.BoxGeometry(1, 0.125, 1),
+                offset: [0, -0.4375, 0]
+            },
+            'minecraft:comparator': {
+                textures: 'comparator_off',
+                geometry: new THREE.BoxGeometry(1, 0.125, 1),
+                offset: [0, -0.4375, 0]
+            },
+            'minecraft:observer': {
+                textures: ['observer_side', 'observer_side', 'observer_top', 'observer_bottom', 'observer_front', 'observer_back'],
+                rotatable: true
+            },
+            'minecraft:piston': {
+                textures: ['piston_side', 'piston_side', 'piston_top', 'piston_bottom', 'piston_front', 'piston_side'],
+                rotatable: true
+            },
+            'minecraft:sticky_piston': {
+                textures: ['piston_side', 'piston_side', 'piston_top', 'piston_bottom', 'piston_front_sticky', 'piston_side'],
+                rotatable: true
+            },
+            
+            // ===== DECORATIVE BLOCKS =====
+            'minecraft:lantern': {
+                textures: 'lantern',
+                geometry: new THREE.BoxGeometry(6/16, 7/16, 6/16),
+                offset: [0, -4.5/16, 0]
+            },
+            'minecraft:soul_lantern': {
+                textures: 'soul_lantern',
+                geometry: new THREE.BoxGeometry(6/16, 7/16, 6/16),
+                offset: [0, -4.5/16, 0]
+            },
+            'minecraft:torch': {
+                textures: 'torch',
+                geometry: new THREE.BoxGeometry(2/16, 10/16, 2/16),
+                offset: [0, -3/16, 0]
+            },
+            'minecraft:soul_torch': {
+                textures: 'soul_torch',
+                geometry: new THREE.BoxGeometry(2/16, 10/16, 2/16),
+                offset: [0, -3/16, 0]
+            },
+            'minecraft:candle': {
+                textures: 'candle',
+                geometry: new THREE.BoxGeometry(4/16, 8/16, 4/16),
+                offset: [0, -4/16, 0]
+            },
+            
+            // ===== PLANT BLOCKS =====
+            'minecraft:bamboo': {
+                textures: 'bamboo_stalk',
+                geometry: new THREE.BoxGeometry(2/16, 1, 2/16)
+            },
+            'minecraft:cactus': {
+                textures: 'cactus_side',
+                geometry: new THREE.BoxGeometry(14/16, 16/16, 14/16),
+                offset: [0, 0, 0]
+            },
+            'minecraft:sugar_cane': {
+                textures: 'sugar_cane',
+                geometry: new THREE.BoxGeometry(6/16, 1, 6/16)
+            },
+            'minecraft:tall_grass': {
+                textures: 'tall_grass_top',
+                transparent: true,
+                geometry: new THREE.BoxGeometry(1, 1, 1)
+            },
+            'minecraft:seagrass': {
+                textures: 'seagrass',
+                transparent: true,
+                geometry: new THREE.BoxGeometry(8/16, 12/16, 8/16)
+            },
+            
+            // ===== STORAGE BLOCKS =====
+            'minecraft:chest': {
+                textures: ['barrel_side', 'barrel_side', 'barrel_top', 'barrel_bottom', 'barrel_front', 'barrel_side'],
+                rotatable: true
+            },
+            'minecraft:trapped_chest': {
+                textures: ['barrel_side', 'barrel_side', 'barrel_top', 'barrel_bottom', 'barrel_front', 'barrel_side'],
+                rotatable: true
+            },
+            'minecraft:furnace': {
+                textures: ['furnace_side', 'furnace_side', 'furnace_top', 'furnace_top', 'furnace_front', 'furnace_side'],
+                rotatable: true
+            },
+            'minecraft:blast_furnace': {
+                textures: ['blast_furnace_side', 'blast_furnace_side', 'blast_furnace_top', 'blast_furnace_top', 'blast_furnace_front', 'blast_furnace_side'],
+                rotatable: true
+            },
+            'minecraft:smoker': {
+                textures: ['smoker_side', 'smoker_side', 'smoker_top', 'smoker_top', 'smoker_front', 'smoker_side'],
+                rotatable: true
+            },
+            'minecraft:hopper': {
+                textures: 'hopper_outside',
+                geometry: new THREE.BoxGeometry(10/16, 10/16, 10/16),
+                offset: [0, -3/16, 0],
+                rotatable: true
+            },
+            'minecraft:dropper': {
+                textures: ['dropper_side', 'dropper_side', 'dropper_top', 'dropper_bottom', 'dropper_front', 'dropper_side'],
+                rotatable: true
+            },
+            'minecraft:dispenser': {
+                textures: ['dispenser_side', 'dispenser_side', 'dispenser_top', 'dispenser_bottom', 'dispenser_front', 'dispenser_side'],
+                rotatable: true
+            },
+            
+            // ===== SOLID COLORED BLOCKS =====
+            'minecraft:sand': { textures: 'sand' },
+            'minecraft:red_sand': { textures: 'red_sand' },
+            'minecraft:gravel': { textures: 'gravel' },
+            'minecraft:coal_ore': { textures: 'coal_ore' },
+            'minecraft:iron_ore': { textures: 'iron_ore' },
+            'minecraft:gold_ore': { textures: 'gold_ore' },
+            'minecraft:diamond_ore': { textures: 'diamond_ore' },
+            'minecraft:emerald_ore': { textures: 'emerald_ore' },
+            'minecraft:lapis_ore': { textures: 'lapis_ore' },
+            'minecraft:redstone_ore': { textures: 'redstone_ore' },
+            'minecraft:clay': { textures: 'clay' },
+            
+            // ===== METAL BLOCKS =====
+            'minecraft:iron_block': { textures: 'iron_block' },
+            'minecraft:gold_block': { textures: 'gold_block' },
+            'minecraft:diamond_block': { textures: 'diamond_block' },
+            'minecraft:emerald_block': { textures: 'emerald_block' },
+            'minecraft:lapis_block': { textures: 'lapis_block' },
+            'minecraft:copper_block': { textures: 'copper_block' },
+            'minecraft:waxed_copper_block': { textures: 'waxed_copper_block' },
+            'minecraft:raw_iron_block': { textures: 'raw_iron_block' },
+            'minecraft:raw_gold_block': { textures: 'raw_gold_block' },
+            'minecraft:raw_copper_block': { textures: 'raw_copper_block' },
+            
+            // ===== GLASS & TRANSPARENT =====
+            'minecraft:glass': { textures: 'glass', transparent: true },
+            'minecraft:white_stained_glass': { textures: 'white_stained_glass', transparent: true },
+            'minecraft:orange_stained_glass': { textures: 'orange_stained_glass', transparent: true },
+            'minecraft:magenta_stained_glass': { textures: 'magenta_stained_glass', transparent: true },
+            'minecraft:light_blue_stained_glass': { textures: 'light_blue_stained_glass', transparent: true },
+            'minecraft:yellow_stained_glass': { textures: 'yellow_stained_glass', transparent: true },
+            'minecraft:lime_stained_glass': { textures: 'lime_stained_glass', transparent: true },
+            'minecraft:pink_stained_glass': { textures: 'pink_stained_glass', transparent: true },
+            'minecraft:gray_stained_glass': { textures: 'gray_stained_glass', transparent: true },
+            'minecraft:light_gray_stained_glass': { textures: 'light_gray_stained_glass', transparent: true },
+            'minecraft:cyan_stained_glass': { textures: 'cyan_stained_glass', transparent: true },
+            'minecraft:purple_stained_glass': { textures: 'purple_stained_glass', transparent: true },
+            'minecraft:blue_stained_glass': { textures: 'blue_stained_glass', transparent: true },
+            'minecraft:brown_stained_glass': { textures: 'brown_stained_glass', transparent: true },
+            'minecraft:green_stained_glass': { textures: 'green_stained_glass', transparent: true },
+            'minecraft:red_stained_glass': { textures: 'red_stained_glass', transparent: true },
+            'minecraft:black_stained_glass': { textures: 'black_stained_glass', transparent: true },
+            
+            // ===== WOOL & FABRIC =====
+            'minecraft:white_wool': { textures: 'white_wool' },
+            'minecraft:orange_wool': { textures: 'orange_wool' },
+            'minecraft:magenta_wool': { textures: 'magenta_wool' },
+            'minecraft:light_blue_wool': { textures: 'light_blue_wool' },
+            'minecraft:yellow_wool': { textures: 'yellow_wool' },
+            'minecraft:lime_wool': { textures: 'lime_wool' },
+            'minecraft:pink_wool': { textures: 'pink_wool' },
+            'minecraft:gray_wool': { textures: 'gray_wool' },
+            'minecraft:light_gray_wool': { textures: 'light_gray_wool' },
+            'minecraft:cyan_wool': { textures: 'cyan_wool' },
+            'minecraft:purple_wool': { textures: 'purple_wool' },
+            'minecraft:blue_wool': { textures: 'blue_wool' },
+            'minecraft:brown_wool': { textures: 'brown_wool' },
+            'minecraft:green_wool': { textures: 'green_wool' },
+            'minecraft:red_wool': { textures: 'red_wool' },
+            'minecraft:black_wool': { textures: 'black_wool' },
+            
+            // ===== CONCRETE =====
+            'minecraft:white_concrete': { textures: 'white_concrete' },
+            'minecraft:orange_concrete': { textures: 'orange_concrete' },
+            'minecraft:magenta_concrete': { textures: 'magenta_concrete' },
+            'minecraft:light_blue_concrete': { textures: 'light_blue_concrete' },
+            'minecraft:yellow_concrete': { textures: 'yellow_concrete' },
+            'minecraft:lime_concrete': { textures: 'lime_concrete' },
+            'minecraft:pink_concrete': { textures: 'pink_concrete' },
+            'minecraft:gray_concrete': { textures: 'gray_concrete' },
+            'minecraft:light_gray_concrete': { textures: 'light_gray_concrete' },
+            'minecraft:cyan_concrete': { textures: 'cyan_concrete' },
+            'minecraft:purple_concrete': { textures: 'purple_concrete' },
+            'minecraft:blue_concrete': { textures: 'blue_concrete' },
+            'minecraft:brown_concrete': { textures: 'brown_concrete' },
+            'minecraft:green_concrete': { textures: 'green_concrete' },
+            'minecraft:red_concrete': { textures: 'red_concrete' },
+            'minecraft:black_concrete': { textures: 'black_concrete' },
+            
+            // ===== BUILDING BLOCKS =====
+            'minecraft:bricks': { textures: 'bricks' },
+            'minecraft:nether_bricks': { textures: 'nether_bricks' },
+            'minecraft:red_nether_bricks': { textures: 'red_nether_bricks' },
+            'minecraft:sandstone': { textures: ['sandstone_side', 'sandstone_side', 'sandstone_top', 'sandstone_bottom', 'sandstone_side', 'sandstone_side'] },
+            'minecraft:red_sandstone': { textures: ['red_sandstone_side', 'red_sandstone_side', 'red_sandstone_top', 'red_sandstone_bottom', 'red_sandstone_side', 'red_sandstone_side'] },
+            'minecraft:purpur_block': { textures: 'purpur_block' },
+            'minecraft:end_stone': { textures: 'end_stone' },
+            'minecraft:end_stone_bricks': { textures: 'end_stone_bricks' },
+            'minecraft:blackstone': { textures: 'blackstone' },
+            'minecraft:basalt': { textures: ['basalt_side', 'basalt_side', 'basalt_top', 'basalt_top', 'basalt_side', 'basalt_side'] },
+            
+            // ===== STAIRS ADDITIONAL =====
+            'minecraft:nether_brick_stairs': { textures: 'nether_bricks', custom: 'stairs' },
+            'minecraft:sandstone_stairs': { textures: 'sandstone_side', custom: 'stairs' },
+            'minecraft:red_sandstone_stairs': { textures: 'red_sandstone_side', custom: 'stairs' },
+            'minecraft:purpur_stairs': { textures: 'purpur_block', custom: 'stairs' },
+            
+            // ===== SPECIAL BLOCKS =====
+            'minecraft:air': { skip: true },
+            'minecraft:cave_air': { skip: true },
+            'minecraft:void_air': { skip: true },
+            'minecraft:water': { textures: 'water_still', transparent: true, opacity: 0.7 },
+            'minecraft:lava': { textures: 'lava_still', transparent: true, opacity: 0.9 },
+            'minecraft:spawner': { textures: 'spawner' },
+            'minecraft:end_portal': { textures: 'end_portal', transparent: true },
+            'minecraft:bedrock': { textures: 'bedrock' },
+            'minecraft:obsidian': { textures: 'obsidian' },
+            'minecraft:crying_obsidian': { textures: 'crying_obsidian' },
+            
+            // ===== RAILS & TRACKS =====
+            'minecraft:rail': {
+                textures: 'rail',
+                geometry: new THREE.BoxGeometry(1, 0.1, 1),
+                offset: [0, -0.45, 0]
+            },
+            'minecraft:powered_rail': {
+                textures: 'powered_rail_off',
+                geometry: new THREE.BoxGeometry(1, 0.1, 1),
+                offset: [0, -0.45, 0]
+            },
+            'minecraft:detector_rail': {
+                textures: 'detector_rail_off',
+                geometry: new THREE.BoxGeometry(1, 0.1, 1),
+                offset: [0, -0.45, 0]
+            }
+        };
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            return hash;
+        }
+
+        async function fetchTexture(texName, transparent = false) {
+            return new Promise((resolve) => {
+                textureLoader.load(
+                    `${TEXTURE_CDN}${texName}.png`, 
+                    (tex) => {
+                        tex.magFilter = THREE.NearestFilter;
+                        tex.minFilter = THREE.NearestFilter;
+                        tex.colorSpace = THREE.SRGBColorSpace;
+                        const matConfig = { map: tex, alphaTest: 0.1 };
+                        if (transparent) {
+                            matConfig.transparent = true;
+                            matConfig.opacity = 0.9;
+                        }
+                        resolve(new THREE.MeshLambertMaterial(matConfig));
+                    },
+                    undefined, 
+                    () => { 
+                        let color = Math.abs(hashCode(texName)) % 0xffffff;
+                        const matConfig = { color: color };
+                        if (transparent) {
+                            matConfig.transparent = true;
+                            matConfig.opacity = 0.9;
+                        }
+                        resolve(new THREE.MeshLambertMaterial(matConfig));
+                    }
+                );
+            });
+        }
+
+        async function loadMaterials(paletteList, statusElement) {
+            let loadedCount = 0;
+            await Promise.all(paletteList.map(async (blockName) => {
+                if (materialCache[blockName]) {
+                    loadedCount++;
+                    statusElement.innerHTML = `Mengunduh Tekstur & Model: ${loadedCount} / ${paletteList.length}`;
+                    return;
+                }
+                
+                const config = BLOCK_REGISTRY[blockName] || { textures: blockName.replace('minecraft:', '').split('[')[0] };
+                
+                if (config.skip) {
+                    materialCache[blockName] = null;
+                    loadedCount++;
+                    return;
+                }
+                
+                if (Array.isArray(config.textures)) {
+                    const materials = await Promise.all(config.textures.map(tex => fetchTexture(tex, config.transparent)));
+                    materialCache[blockName] = materials;
+                } else {
+                    materialCache[blockName] = await fetchTexture(config.textures, config.transparent);
+                }
+                
+                loadedCount++;
+                statusElement.innerHTML = `Mengunduh Tekstur & Model: ${loadedCount} / ${paletteList.length}`;
+            }));
+        }
+
+        // --- 3. ROTASI BLOK BERDASARKAN FACING DIRECTION ---
+        function getBlockRotation(block, config) {
+            const rotation = new THREE.Euler(0, 0, 0);
+            
+            if (!config.rotatable || !block.states) {
+                return rotation;
+            }
+
+            // Mapping facing direction ke rotasi
+            const facing = block.states.minecraft_facing_direction ?? 
+                          block.states.facing_direction ??
+                          block.states.minecraft_vertical_half;
+            
+            if (facing !== undefined) {
+                switch(facing) {
+                    case 0: rotation.x = Math.PI / 2; break; // Down
+                    case 1: rotation.x = -Math.PI / 2; break; // Up
+                    case 2: rotation.y = Math.PI; break; // North
+                    case 3: rotation.y = 0; break; // South
+                    case 4: rotation.y = Math.PI / 2; break; // West
+                    case 5: rotation.y = -Math.PI / 2; break; // East
+                }
+            }
+            
+            return rotation;
+        }
+
+        // --- 4. BEDROCK NBT PARSER ---
+        class BedrockNBTReader {
+            constructor(buffer) {
+                this.view = new DataView(buffer);
+                this.offset = 0;
+                this.decoder = new TextDecoder('utf-8');
+            }
+            readByte() { const v = this.view.getInt8(this.offset); this.offset += 1; return v; }
+            readShort() { const v = this.view.getInt16(this.offset, true); this.offset += 2; return v; }
+            readInt() { const v = this.view.getInt32(this.offset, true); this.offset += 4; return v; }
+            readLong() { this.offset += 8; return 0; } 
+            readFloat() { const v = this.view.getFloat32(this.offset, true); this.offset += 4; return v; }
+            readDouble() { const v = this.view.getFloat64(this.offset, true); this.offset += 8; return v; }
+            readByteArray() { const len = this.readInt(); this.offset += len; return []; }
+            readString() {
+                const len = this.readShort();
+                const str = this.decoder.decode(new Uint8Array(this.view.buffer, this.offset, len));
+                this.offset += len;
+                return str;
+            }
+            readIntArray() { const len = this.readInt(); this.offset += (len * 4); return []; }
+            readTag(type) {
+                switch(type) {
+                    case 1: return this.readByte();
+                    case 2: return this.readShort();
+                    case 3: return this.readInt();
+                    case 4: return this.readLong();
+                    case 5: return this.readFloat();
+                    case 6: return this.readDouble();
+                    case 7: return this.readByteArray();
+                    case 8: return this.readString();
+                    case 9: 
+                        const listType = this.readByte();
+                        const len = this.readInt();
+                        const list = [];
+                        for(let i=0; i<len; i++) list.push(this.readTag(listType));
+                        return list;
+                    case 10: 
+                        const obj = {};
+                        while(true) {
+                            const tagType = this.readByte();
+                            if (tagType === 0) break;
+                            const name = this.readString();
+                            obj[name] = this.readTag(tagType);
+                        }
+                        return obj;
+                    case 11: return this.readIntArray();
+                    default: throw new Error(`Tipe Tag NBT tidak didukung: ${type}`);
+                }
+            }
+            parse() {
+                let rootType = this.readByte();
+                let failsafe = 0;
+                while (rootType !== 10 && failsafe < 20) {
+                    rootType = this.readByte();
+                    failsafe++;
+                }
+                if (rootType !== 10) throw new Error("Format tidak valid.");
+                this.readString(); 
+                return this.readTag(10);
+            }
+        }
+
+        // --- 5. DATA EXTRACTION & RENDER EXECUTION ---
+        let parsedBlocksData = [];
+        let activeMeshes = [];
+
+        function updateRenderLayer(maxLayer) {
+            activeMeshes.forEach(mesh => scene.remove(mesh));
+            activeMeshes = [];
+            
+            const visibleBlocks = parsedBlocksData.filter(b => b.y <= maxLayer);
+            if (visibleBlocks.length === 0) return;
+
+            const groupedBlocks = {};
+            visibleBlocks.forEach(b => {
+                if (!groupedBlocks[b.name]) groupedBlocks[b.name] = [];
+                groupedBlocks[b.name].push(b);
+            });
+
+            for (const [blockId, blocks] of Object.entries(groupedBlocks)) {
+                const config = BLOCK_REGISTRY[blockId] || {};
+                
+                if (config.skip) continue;
+                
+                const geometry = config.geometry || defaultGeometry;
+                const material = materialCache[blockId];
+                
+                if (!material) continue;
+
+                blocks.forEach((block) => {
+                    const position = new THREE.Vector3(block.x, block.y, block.z);
+                    const rotation = getBlockRotation(block, config);
+                    const scale = new THREE.Vector3(1, 1, 1);
+
+                    if (config.offset) {
+                        position.x += config.offset[0];
+                        position.y += config.offset[1];
+                        position.z += config.offset[2];
+                    }
+
+                    const quaternion = new THREE.Quaternion().setFromEuler(rotation);
+                    const matrix = new THREE.Matrix4();
+                    matrix.compose(position, quaternion, scale);
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.applyMatrix4(matrix);
+                    scene.add(mesh);
+                    activeMeshes.push(mesh);
+                });
+            }
+        }
+
+        // --- 6. FILE UPLOAD HANDLER ---
+        const fileUpload = document.getElementById('file-upload');
+        const statusText = document.getElementById('status');
+        const layerSlider = document.getElementById('layer-slider');
+        const layerVal = document.getElementById('layer-val');
+
+        fileUpload.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            statusText.style.color = '#ccc';
+            statusText.innerHTML = "Membedah struktur NBT...";
+            
+            const buffer = await file.arrayBuffer();
+            
+            try {
+                const nbtReader = new BedrockNBTReader(buffer);
+                const nbtData = nbtReader.parse();
+
+                const size = nbtData.size;
+                const structureSize = { x: size[0], y: size[1], z: size[2] };
+                const palette = nbtData.structure.palette.default.block_palette; 
+                
+                parsedBlocksData = [];
+
+                for (let layer = 0; layer < nbtData.structure.block_indices.length; layer++) {
+                    const blockIndices = nbtData.structure.block_indices[layer];
+                    
+                    for (let i = 0; i < blockIndices.length; i++) {
+                        const paletteIndex = blockIndices[i];
+                        if (paletteIndex === undefined || paletteIndex < 0) continue;
+                        
+                        const blockState = palette[paletteIndex];
+                        if (!blockState) continue;
+                        
+                        const config = BLOCK_REGISTRY[blockState.name] || {};
+                        if (config.skip || blockState.name === 'minecraft:air') continue;
+
+                        const z = i % structureSize.z;
+                        const y = Math.floor(i / structureSize.z) % structureSize.y;
+                        const x = Math.floor(i / (structureSize.y * structureSize.z));
+
+                        parsedBlocksData.push({ 
+                            x, y, z, 
+                            name: blockState.name, 
+                            states: blockState.states 
+                        });
+                    }
+                }
+
+                const uniqueBlocks = [...new Set(parsedBlocksData.map(b => b.name))];
+                await loadMaterials(uniqueBlocks, statusText);
+
+                controls.target.set(structureSize.x / 2, structureSize.y / 2, structureSize.z / 2);
+                camera.position.set(structureSize.x * 1.5, structureSize.y * 1.5, structureSize.z * 1.5);
+                
+                layerSlider.disabled = false;
+                layerSlider.max = structureSize.y - 1;
+                layerSlider.value = structureSize.y - 1;
+                layerVal.innerText = structureSize.y - 1;
+
+                updateRenderLayer(structureSize.y - 1);
+                
+                statusText.style.color = '#4CAF50';
+                statusText.innerHTML = `✓ Sempurna! ${uniqueBlocks.length} jenis blok dimuat.`;
+
+            } catch (error) {
+                console.error(error);
+                statusText.style.color = '#ff5555';
+                statusText.innerHTML = `Gagal: ${error.message}`;
+            }
+        });
+
+        layerSlider.addEventListener('input', (e) => {
+            const currentLayer = parseInt(e.target.value);
+            layerVal.innerText = currentLayer;
+            updateRenderLayer(currentLayer);
+        });
+
+        document.getElementById('ui-container').addEventListener('pointerdown', (e) => e.stopPropagation());
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
